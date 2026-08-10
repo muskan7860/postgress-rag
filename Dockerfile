@@ -9,11 +9,10 @@ ENV PYTHONUNBUFFERED=1
 # Application directory inside the container
 WORKDIR /app
 
-# copy dependency file first
-COPY requirements.txt
+COPY requirements.txt .
 
-#Install python dependencies
-RUN pip install ==no-cache
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code
 COPY app.py .
