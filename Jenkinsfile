@@ -71,6 +71,5 @@ EOF
             }
         }
     }
-}muskan@muskan-ThinkPad-L14-Gen-1:~/Devops-lab/postgress-rag/postgress-rag$ 
-
+}
 
