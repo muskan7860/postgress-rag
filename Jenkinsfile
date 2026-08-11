@@ -2,14 +2,11 @@ pipeline {
 
     agent {
         kubernetes {
-
             yaml '''
 apiVersion: v1
 kind: Pod
 spec:
-
   containers:
-
     - name: kaniko
       image: gcr.io/kaniko-project/executor:v1.23.2-debug
       command:
@@ -24,7 +21,6 @@ spec:
     - name: docker-config
       emptyDir: {}
 '''
-
             defaultContainer 'kaniko'
         }
     }
@@ -47,8 +43,13 @@ spec:
                 checkout scm
 
                 sh '''
-                    echo "Application source checked out."
-                    echo "Workspace: $WORKSPACE"
+                    echo "========================================"
+                    echo "Application source checked out"
+                    echo "========================================"
+
+                    echo "Workspace:"
+                    echo "$WORKSPACE"
+
                     ls -la
                 '''
             }
@@ -83,7 +84,7 @@ spec:
                           "$DOCKER_PASSWORD" | \
                           base64 | tr -d '\\n')
 
-                        cat > /kaniko/.docker/config.json <<EOF2
+                        cat > /kaniko/.docker/config.json <<EOF
 {
   "auths": {
     "https://index.docker.io/v1/": {
@@ -91,7 +92,7 @@ spec:
     }
   }
 }
-EOF2
+EOF
 
                         /kaniko/executor \
                           --context="$WORKSPACE" \
@@ -100,8 +101,9 @@ EOF2
 
                         echo "========================================"
                         echo "Docker image pushed successfully"
-                        echo "$IMAGE_NAME:$IMAGE_TAG"
                         echo "========================================"
+
+                        echo "$IMAGE_NAME:$IMAGE_TAG"
                     '''
                 }
             }
@@ -137,7 +139,7 @@ EOF2
                         echo "Current image:"
                         grep "image:" k8s/deployment.yml
 
-                        echo "Updating image tag to:"
+                        echo "Updating image tag:"
                         echo "$IMAGE_TAG"
 
                         sed -i \
@@ -157,7 +159,7 @@ EOF2
 
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'github-gitops-creds',
+                        credentialsId: 'github-creds',
                         usernameVariable: 'GIT_USERNAME',
                         passwordVariable: 'GIT_PASSWORD'
                     )
@@ -183,8 +185,10 @@ EOF2
 
                         echo "========================================"
                         echo "GitOps repository updated successfully"
-                        echo "Image tag: $IMAGE_TAG"
                         echo "========================================"
+
+                        echo "Image tag:"
+                        echo "$IMAGE_TAG"
                     '''
                 }
             }
@@ -196,37 +200,37 @@ EOF2
         success {
 
             echo """
-            ========================================
-            PIPELINE SUCCESS
-            ========================================
+========================================
+PIPELINE SUCCESS
+========================================
 
-            Docker Image:
-            $IMAGE_NAME:$IMAGE_TAG
+Docker Image:
+$IMAGE_NAME:$IMAGE_TAG
 
-            GitOps:
-            Updated successfully
+GitOps Repository:
+$GITOPS_REPO
 
-            Argo CD:
-            Will detect the Git change
+Argo CD:
+Will detect the Git change
 
-            MicroK8s:
-            Argo CD will synchronize the application
+MicroK8s:
+Argo CD will synchronize the application
 
-            ========================================
-            """
+========================================
+"""
         }
 
         failure {
 
             echo """
-            ========================================
-            PIPELINE FAILED
-            ========================================
+========================================
+PIPELINE FAILED
+========================================
 
-            Check the Jenkins stage logs.
+Check the Jenkins stage logs.
 
-            ========================================
-            """
+========================================
+"""
         }
     }
 }
